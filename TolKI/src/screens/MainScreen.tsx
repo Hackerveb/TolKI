@@ -14,9 +14,10 @@ import { Alert } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { LanguageDropdown } from '../components/LanguageDropdown';
 import { Language, NavigationParamList } from '../types';
-import { defaultSourceLanguage, defaultTargetLanguage } from '../constants/languages';
+import { defaultSourceLanguage, defaultTargetLanguage, getLanguageByCode } from '../constants/languages';
 import { useCredits } from '../hooks/useCredits';
 import { useTrackUsage } from '../hooks/useTrackUsage';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 import { colors } from '../styles/colors';
 import { typography } from '../styles/typography';
 import { spacing, radius } from '../styles/global';
@@ -39,7 +40,8 @@ export const MainScreen: React.FC = () => {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [seconds, setSeconds] = useState(0);
 
-  // Credit system hooks
+  // User and credit system hooks
+  const { convexUser } = useCurrentUser();
   const { balance, hasCredits, isLowOnCredits } = useCredits();
   const { startTracking, stopTracking, isTracking, sessionCreditsUsed, sessionSecondsUsed } = useTrackUsage();
   
@@ -59,6 +61,27 @@ export const MainScreen: React.FC = () => {
   const buttonRotateAnimation = useRef<Animated.CompositeAnimation | null>(null);
   const iconRotateAnimation = useRef<Animated.CompositeAnimation | null>(null);
   const connectingTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Set user's default language when data loads
+  useEffect(() => {
+    if (convexUser?.defaultLanguage) {
+      const userDefaultLanguage = getLanguageByCode(convexUser.defaultLanguage);
+      if (userDefaultLanguage) {
+        // Set source language to user's preference
+        setSourceLanguage(userDefaultLanguage);
+
+        // If the default language is the same as current target, swap them
+        if (userDefaultLanguage.code === targetLanguage.code) {
+          // Set target to English if source becomes the previous target
+          // Or to Spanish if source is English
+          const newTarget = userDefaultLanguage.code === 'en'
+            ? getLanguageByCode('es') || defaultTargetLanguage
+            : getLanguageByCode('en') || defaultSourceLanguage;
+          setTargetLanguage(newTarget);
+        }
+      }
+    }
+  }, [convexUser?.defaultLanguage]); // Only run when defaultLanguage changes
 
   useEffect(() => {
     return () => {
@@ -542,6 +565,23 @@ export const MainScreen: React.FC = () => {
     return recordingState === 'recording' ? 8 : 20;
   };
 
+  // Smart language selection handlers
+  const handleSourceLanguageSelect = (language: Language) => {
+    setSourceLanguage(language);
+    // If selected language is same as target, swap them
+    if (language.code === targetLanguage.code) {
+      setTargetLanguage(sourceLanguage); // Move current source to target
+    }
+  };
+
+  const handleTargetLanguageSelect = (language: Language) => {
+    setTargetLanguage(language);
+    // If selected language is same as source, swap them
+    if (language.code === sourceLanguage.code) {
+      setSourceLanguage(targetLanguage); // Move current target to source
+    }
+  };
+
   // Calculate pulse ring styles separately to avoid borderWidth animation
   const getPulseRingStyle = (pulseAnim: Animated.Value, index: number) => {
     const scale = pulseAnim.interpolate({
@@ -565,13 +605,13 @@ export const MainScreen: React.FC = () => {
       <View style={styles.header}>
         <LanguageDropdown
           selectedLanguage={sourceLanguage}
-          onLanguageSelect={setSourceLanguage}
+          onLanguageSelect={handleSourceLanguageSelect}
           dropDirection="down"
         />
         <View style={styles.separatorDot} />
         <LanguageDropdown
           selectedLanguage={targetLanguage}
-          onLanguageSelect={setTargetLanguage}
+          onLanguageSelect={handleTargetLanguageSelect}
           dropDirection="down"
         />
         <Pressable
