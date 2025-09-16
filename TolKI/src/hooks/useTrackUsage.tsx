@@ -9,12 +9,14 @@ export const useTrackUsage = () => {
   const [sessionId, setSessionId] = useState<Id<"usageSessions"> | null>(null);
   const [isTracking, setIsTracking] = useState(false);
   const [sessionCreditsUsed, setSessionCreditsUsed] = useState(0);
+  const [sessionSecondsUsed, setSessionSecondsUsed] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number | null>(null);
 
   // Mutations
   const startSession = useMutation(api.usageSessions.startSession);
   const endSession = useMutation(api.usageSessions.endSession);
-  const incrementCredits = useMutation(api.usageSessions.incrementSessionCredits);
+  const updateFractionalCredits = useMutation(api.usageSessions.updateFractionalCredits);
 
   // Query for active session
   const activeSession = useQuery(
@@ -38,26 +40,35 @@ export const useTrackUsage = () => {
 
       setSessionId(newSessionId);
       setIsTracking(true);
-      setSessionCreditsUsed(0);
+      setSessionCreditsUsed(0.05); // Minimum charge already applied
+      setSessionSecondsUsed(3); // Minimum 3 seconds
+      startTimeRef.current = Date.now();
 
-      // Start interval to deduct credits every minute
+      // Start interval to deduct credits every 3 seconds
       intervalRef.current = setInterval(async () => {
         try {
-          const result = await incrementCredits({
+          // Calculate actual seconds elapsed
+          const actualSeconds = Math.floor((Date.now() - (startTimeRef.current || Date.now())) / 1000);
+          const secondsToAdd = 3; // Add 3 seconds each interval
+
+          const result = await updateFractionalCredits({
             clerkId: clerkUser.id,
+            secondsToAdd,
           });
+
           setSessionCreditsUsed(result.sessionCreditsUsed);
+          setSessionSecondsUsed(result.secondsUsed);
 
           // Stop tracking if credits run out
-          if (result.creditsRemaining === 0) {
+          if (result.creditsRemaining <= 0.05) {
             stopTracking();
           }
         } catch (error) {
-          console.error('Error incrementing credits:', error);
+          console.error('Error updating credits:', error);
           // Stop tracking if there's an error (likely insufficient credits)
           stopTracking();
         }
-      }, 60000); // Every 60 seconds
+      }, 3000); // Every 3 seconds
 
       return newSessionId;
     } catch (error) {
@@ -87,6 +98,8 @@ export const useTrackUsage = () => {
     setIsTracking(false);
     setSessionId(null);
     setSessionCreditsUsed(0);
+    setSessionSecondsUsed(0);
+    startTimeRef.current = null;
   };
 
   // Cleanup on unmount
@@ -102,6 +115,7 @@ export const useTrackUsage = () => {
     isTracking,
     sessionId,
     sessionCreditsUsed,
+    sessionSecondsUsed,
     activeSession,
     startTracking,
     stopTracking,

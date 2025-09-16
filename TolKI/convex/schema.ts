@@ -28,6 +28,7 @@ export default defineSchema({
   usageSessions: defineTable({
     userId: v.id("users"),
     creditsUsed: v.number(),
+    secondsUsed: v.optional(v.number()), // Track exact seconds of usage (optional for migration)
     languageFrom: v.string(),
     languageTo: v.string(),
     startedAt: v.number(),

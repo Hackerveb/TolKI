@@ -41,8 +41,8 @@ export const useCredits = () => {
     }
   };
 
-  // Check if user has enough credits
-  const hasCredits = (amount: number = 1) => balance >= amount;
+  // Check if user has enough credits (default to minimum session charge)
+  const hasCredits = (amount: number = 0.05) => balance >= amount;
 
   // Check if user is low on credits
   const isLowOnCredits = balance < 5 && balance > 0;

@@ -165,7 +165,7 @@ export const BuyCreditsScreen: React.FC = () => {
       const result = await purchaseCredits(selectedPackageId);
       Alert.alert(
         'Purchase Successful!',
-        `${creditPackages[selectedPackageId].credits} credits have been added to your account. New balance: ${result.newBalance} credits.`,
+        `${creditPackages[selectedPackageId].credits} credits have been added to your account. New balance: ${result.newBalance?.toFixed(2) || '0.00'} credits.`,
         [
           {
             text: 'OK',
@@ -200,11 +200,11 @@ export const BuyCreditsScreen: React.FC = () => {
         <View style={styles.balanceContainer}>
           <Text style={styles.balanceLabel}>Current Balance</Text>
           <View style={styles.balanceValue}>
-            <Text style={styles.balanceNumber}>{balance}</Text>
+            <Text style={styles.balanceNumber}>{balance?.toFixed(2) || '0.00'}</Text>
             <Text style={styles.balanceUnit}>credits</Text>
           </View>
           <Text style={styles.balanceDescription}>
-            = {balance} minutes of translation remaining
+            = {balance?.toFixed(2) || '0.00'} minutes of translation remaining
           </Text>
         </View>
 
@@ -212,8 +212,9 @@ export const BuyCreditsScreen: React.FC = () => {
         <View style={styles.infoBox}>
           <Text style={styles.infoTitle}>How credits work</Text>
           <Text style={styles.infoText}>• 1 credit = 1 minute of translation</Text>
+          <Text style={styles.infoText}>• Minimum charge: 0.05 credits per session</Text>
+          <Text style={styles.infoText}>• Credits deducted every 3 seconds (0.05 credits)</Text>
           <Text style={styles.infoText}>• Credits never expire</Text>
-          <Text style={styles.infoText}>• Use them anytime you need</Text>
         </View>
 
         {/* Credit Packages */}

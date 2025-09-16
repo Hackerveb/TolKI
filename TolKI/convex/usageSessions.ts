@@ -40,10 +40,23 @@ export const startSession = mutation({
       });
     }
 
-    // Create new session
+    // Deduct minimum session charge (0.05 credits = 3 seconds)
+    const minimumCharge = 0.05;
+    if (user.credits < minimumCharge) {
+      throw new Error("Insufficient credits. Minimum 0.05 credits required");
+    }
+
+    // Deduct minimum charge immediately
+    await ctx.db.patch(user._id, {
+      credits: Math.round((user.credits - minimumCharge) * 100) / 100,
+      lastActive: Date.now(),
+    });
+
+    // Create new session with minimum charge already applied
     const sessionId = await ctx.db.insert("usageSessions", {
       userId: user._id,
-      creditsUsed: 0,
+      creditsUsed: minimumCharge,
+      secondsUsed: 3, // Minimum 3 seconds
       languageFrom: args.languageFrom,
       languageTo: args.languageTo,
       startedAt: Date.now(),
@@ -74,18 +87,36 @@ export const endSession = mutation({
       endedAt: Date.now(),
     });
 
+    // Calculate actual seconds used and final credit charge
+    const actualSecondsUsed = Math.floor((Date.now() - session.startedAt) / 1000);
+    // Use stored secondsUsed if available, otherwise calculate from duration
+    const storedSecondsUsed = session.secondsUsed || 0;
+    const totalSecondsUsed = Math.max(actualSecondsUsed, storedSecondsUsed);
+    const finalCreditsUsed = Math.max(
+      0.05, // Minimum charge
+      Math.round((totalSecondsUsed / 60) * 100) / 100
+    );
+
+    // Update session with final values
+    await ctx.db.patch(args.sessionId, {
+      secondsUsed: totalSecondsUsed,
+      creditsUsed: finalCreditsUsed,
+    });
+
     // Return final session details
     return {
-      creditsUsed: session.creditsUsed,
+      creditsUsed: finalCreditsUsed,
+      secondsUsed: totalSecondsUsed,
       duration: Date.now() - session.startedAt,
     };
   },
 });
 
-// Increment credits used in a session (called every minute)
-export const incrementSessionCredits = mutation({
+// Update fractional credits (called every 3 seconds)
+export const updateFractionalCredits = mutation({
   args: {
     clerkId: v.string(),
+    secondsToAdd: v.number(), // Usually 3 seconds
   },
   handler: async (ctx, args) => {
     // Get user
@@ -110,31 +141,69 @@ export const incrementSessionCredits = mutation({
       throw new Error("No active session found");
     }
 
-    // Check if user has credits
-    if (user.credits <= 0) {
-      // End session if no credits
+    // Calculate credits to deduct (0.05 per 3 seconds = 1 credit per 60 seconds)
+    const creditsToDeduct = (args.secondsToAdd / 60);
+
+    // Check if user has enough credits
+    if (user.credits < creditsToDeduct) {
+      // End session if insufficient credits
+      const currentSeconds = activeSession.secondsUsed || 0;
+      const finalSecondsUsed = currentSeconds + args.secondsToAdd;
+      const finalCreditsUsed = Math.round((finalSecondsUsed / 60) * 100) / 100;
+
       await ctx.db.patch(activeSession._id, {
         isActive: false,
         endedAt: Date.now(),
+        secondsUsed: finalSecondsUsed,
+        creditsUsed: finalCreditsUsed,
       });
+
+      // Deduct remaining credits
+      await ctx.db.patch(user._id, {
+        credits: 0,
+        lastActive: Date.now(),
+      });
+
       throw new Error("Insufficient credits - session ended");
     }
 
-    // Deduct 1 credit from user
+    // Update seconds used (handle optional field for migration)
+    const currentSecondsUsed = activeSession.secondsUsed || 0;
+    const newSecondsUsed = currentSecondsUsed + args.secondsToAdd;
+    const newCreditsUsed = Math.round((newSecondsUsed / 60) * 100) / 100;
+
+    // Deduct fractional credits from user
+    const newBalance = Math.round((user.credits - creditsToDeduct) * 100) / 100;
     await ctx.db.patch(user._id, {
-      credits: user.credits - 1,
+      credits: newBalance,
       lastActive: Date.now(),
     });
 
-    // Increment credits used in session
+    // Update session
     await ctx.db.patch(activeSession._id, {
-      creditsUsed: activeSession.creditsUsed + 1,
+      secondsUsed: newSecondsUsed,
+      creditsUsed: newCreditsUsed,
     });
 
     return {
-      creditsRemaining: user.credits - 1,
-      sessionCreditsUsed: activeSession.creditsUsed + 1,
+      creditsRemaining: newBalance,
+      sessionCreditsUsed: newCreditsUsed,
+      secondsUsed: newSecondsUsed,
     };
+  },
+});
+
+// Legacy function - kept for backwards compatibility but not used
+export const incrementSessionCredits = mutation({
+  args: {
+    clerkId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Redirect to new fractional system (60 seconds = 1 credit)
+    return await updateFractionalCredits(ctx, {
+      clerkId: args.clerkId,
+      secondsToAdd: 60,
+    });
   },
 });
 

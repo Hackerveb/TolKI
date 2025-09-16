@@ -110,12 +110,15 @@ export const deductCredits = mutation({
       throw new Error("Insufficient credits");
     }
 
+    // Handle decimal credits with proper rounding
+    const newBalance = Math.round((user.credits - args.credits) * 100) / 100;
+
     await ctx.db.patch(user._id, {
-      credits: user.credits - args.credits,
+      credits: newBalance,
       lastActive: Date.now(),
     });
 
-    return user.credits - args.credits; // Return new balance
+    return newBalance; // Return new balance
   },
 });
 

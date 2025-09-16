@@ -41,7 +41,7 @@ export const MainScreen: React.FC = () => {
 
   // Credit system hooks
   const { balance, hasCredits, isLowOnCredits } = useCredits();
-  const { startTracking, stopTracking, isTracking } = useTrackUsage();
+  const { startTracking, stopTracking, isTracking, sessionCreditsUsed, sessionSecondsUsed } = useTrackUsage();
   
   // Animation values for record button
   const buttonRotateAnim = useRef(new Animated.Value(0)).current;
@@ -363,11 +363,11 @@ export const MainScreen: React.FC = () => {
 
   const handleRecordPress = async () => {
     if (recordingState === 'off') {
-      // Check if user has credits
-      if (!hasCredits()) {
+      // Check if user has enough credits (minimum 0.05)
+      if (!hasCredits() || balance < 0.05) {
         Alert.alert(
-          'No Credits Available',
-          'You need credits to use the translation service. Would you like to buy credits?',
+          'Insufficient Credits',
+          `You need at least 0.05 credits to start a session (minimum charge). You have ${balance?.toFixed(2) || '0.00'} credits. Would you like to buy more?`,
           [
             { text: 'Cancel', style: 'cancel' },
             {
@@ -383,7 +383,7 @@ export const MainScreen: React.FC = () => {
       if (isLowOnCredits) {
         Alert.alert(
           'Low on Credits',
-          `You have ${balance} credits remaining. Consider buying more credits.`,
+          `You have ${balance?.toFixed(2) || '0.00'} credits remaining. Consider buying more credits.`,
           [
             { text: 'Continue', style: 'default' },
             {
@@ -566,11 +566,13 @@ export const MainScreen: React.FC = () => {
         <LanguageDropdown
           selectedLanguage={sourceLanguage}
           onLanguageSelect={setSourceLanguage}
+          dropDirection="down"
         />
         <View style={styles.separatorDot} />
         <LanguageDropdown
           selectedLanguage={targetLanguage}
           onLanguageSelect={setTargetLanguage}
+          dropDirection="down"
         />
         <Pressable
           onPress={() => navigation.navigate('Settings')}
@@ -597,9 +599,15 @@ export const MainScreen: React.FC = () => {
       <View style={styles.mainContent}>
         {/* Credit Display */}
         <View style={styles.creditDisplay}>
-          <Text style={styles.creditNumber}>{balance}</Text>
+          <Text style={styles.creditNumber}>{balance?.toFixed(2) || '0.00'}</Text>
           <Text style={styles.creditLabel}>credits remaining</Text>
-          {isLowOnCredits && (
+          {isTracking && (
+            <Text style={styles.usageRate}>Using ~1 credit/minute</Text>
+          )}
+          {!isTracking && balance > 0 && balance < 0.05 && (
+            <Text style={styles.minimumChargeWarning}>Minimum charge: 0.05 credits</Text>
+          )}
+          {isLowOnCredits && !isTracking && (
             <Pressable
               onPress={() => navigation.navigate('BuyCredits')}
               style={styles.buyCreditsHint}
@@ -786,5 +794,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.primary,
     fontWeight: '600',
+  },
+  usageRate: {
+    fontSize: 12,
+    color: colors.blueMunsell,
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
+  minimumChargeWarning: {
+    fontSize: 11,
+    color: '#FFA500',
+    marginTop: 2,
   },
 });

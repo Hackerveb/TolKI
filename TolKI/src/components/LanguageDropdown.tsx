@@ -21,6 +21,7 @@ interface LanguageDropdownProps {
   selectedLanguage: Language;
   onLanguageSelect: (language: Language) => void;
   placeholder?: string;
+  dropDirection?: 'up' | 'down';
 }
 
 const AnimatedSvg = Animated.createAnimatedComponent(Svg);
@@ -44,6 +45,7 @@ const DropdownArrow = ({ rotation }: { rotation: Animated.AnimatedInterpolation<
 export const LanguageDropdown: React.FC<LanguageDropdownProps> = ({
   selectedLanguage,
   onLanguageSelect,
+  dropDirection = 'up', // Default to 'up' for backwards compatibility
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownAnim = useRef(new Animated.Value(0)).current;
@@ -109,7 +111,9 @@ export const LanguageDropdown: React.FC<LanguageDropdownProps> = ({
 
   const dropdownTranslateY = dropdownAnim.interpolate({
     inputRange: [0, 0.6, 1],
-    outputRange: [10, -2, 0], // Changed to drop up
+    outputRange: dropDirection === 'down'
+      ? [-10, 2, 0]  // Drop down animation
+      : [10, -2, 0], // Drop up animation
   });
 
   const dropdownScale = dropdownAnim.interpolate({
@@ -134,6 +138,7 @@ export const LanguageDropdown: React.FC<LanguageDropdownProps> = ({
         <Animated.View
           style={[
             styles.dropdownMenu,
+            dropDirection === 'down' ? styles.dropdownMenuDown : styles.dropdownMenuUp,
             {
               opacity: dropdownAnim,
               transform: [
@@ -203,7 +208,6 @@ const styles = StyleSheet.create({
   },
   dropdownMenu: {
     position: 'absolute' as 'absolute',
-    bottom: 50, // Changed from top to bottom to drop up
     left: 0,
     right: 0,
     backgroundColor: colors.background,
@@ -218,6 +222,12 @@ const styles = StyleSheet.create({
         elevation: 999, // Increased elevation
       },
     }),
+  },
+  dropdownMenuUp: {
+    bottom: 50,
+  },
+  dropdownMenuDown: {
+    top: 50,
   },
   dropdownScroll: {
     maxHeight: 450,
