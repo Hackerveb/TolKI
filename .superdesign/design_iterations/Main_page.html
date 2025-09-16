@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Voice Translator - Dropdown Style 1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            /* Core Colors */
+            --onyx: #393d3f;
+            --white: #fdfdff;
+            --silver: #c6c5b9;
+            --blue-munsell: #62929e;
+            
+            /* Semantic Colors */
+            --background: var(--white);
+            --foreground: var(--onyx);
+            --primary: var(--blue-munsell);
+            --secondary: var(--silver);
+            
+            /* Typography */
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            
+            /* Neumorphic Shadows */
+            --shadow-elevated: 8px 8px 16px rgba(198, 197, 185, 0.4), 
+                              -8px -8px 16px rgba(255, 255, 255, 0.9);
+            --shadow-pressed: inset 4px 4px 8px rgba(198, 197, 185, 0.4), 
+                             inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+            --shadow-subtle: 4px 4px 8px rgba(198, 197, 185, 0.2), 
+                            -4px -4px 8px rgba(255, 255, 255, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--background);
+            color: var(--foreground);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            max-width: 430px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .language-dropdown {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--background);
+            box-shadow: var(--shadow-subtle);
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            color: var(--foreground);
+            font-family: var(--font-sans);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 100px;
+            position: relative;
+        }
+
+        .language-dropdown:hover {
+            box-shadow: var(--shadow-elevated);
+        }
+
+        .language-dropdown:focus {
+            outline: none;
+            box-shadow: var(--shadow-pressed);
+        }
+
+        /* Custom Dropdown Style 1 - Floating Cards */
+        .dropdown-wrapper {
+            position: relative;
+            flex: 1;
+        }
+
+        .dropdown-toggle {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--background);
+            box-shadow: var(--shadow-subtle);
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            color: var(--foreground);
+            font-family: var(--font-sans);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dropdown-toggle:hover {
+            box-shadow: var(--shadow-elevated);
+        }
+
+        .dropdown-toggle.active {
+            box-shadow: var(--shadow-pressed);
+        }
+
+        .dropdown-arrow {
+            width: 12px;
+            height: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .dropdown-toggle.active .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            right: 0;
+            background: var(--background);
+            border-radius: 16px;
+            box-shadow: var(--shadow-elevated);
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px) scale(0.95);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 50;
+        }
+
+        .dropdown-menu.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+            animation: dropdownBounce 0.4s ease-out;
+        }
+
+        @keyframes dropdownBounce {
+            0% { transform: translateY(-10px) scale(0.95); }
+            60% { transform: translateY(2px) scale(1.02); }
+            100% { transform: translateY(0) scale(1); }
+        }
+
+        .dropdown-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dropdown-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            background: var(--blue-munsell);
+            transform: translateX(-3px);
+            transition: transform 0.25s ease;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(98, 146, 158, 0.1);
+            padding-left: 24px;
+        }
+
+        .dropdown-item:hover::before {
+            transform: translateX(0);
+        }
+
+        .dropdown-item:active {
+            background: rgba(98, 146, 158, 0.2);
+            transform: scale(0.98);
+        }
+
+        .dropdown-item:not(:last-child) {
+            border-bottom: 1px solid rgba(198, 197, 185, 0.2);
+        }
+
+        .separator-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--silver);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .settings-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--background);
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .settings-btn:hover {
+            box-shadow: var(--shadow-elevated);
+            transform: rotate(90deg);
+        }
+
+        .settings-btn:active {
+            box-shadow: var(--shadow-pressed);
+            transform: rotate(180deg) scale(0.95);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .record-button {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--background);
+            box-shadow: var(--shadow-elevated);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .record-button:hover {
+            transform: scale(1.05);
+        }
+
+        .record-button:active {
+            box-shadow: var(--shadow-pressed);
+            transform: scale(0.98);
+        }
+
+        .record-button.connecting {
+            animation: connectingPulse 1.2s infinite ease-in-out;
+        }
+
+        .record-button.recording {
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes connectingPulse {
+            0% { 
+                box-shadow: var(--shadow-elevated);
+                transform: scale(1) rotate(0deg);
+            }
+            25% {
+                box-shadow: var(--shadow-elevated), 0 0 0 8px rgba(98, 146, 158, 0.4);
+                transform: scale(1.05) rotate(90deg);
+            }
+            50% { 
+                box-shadow: var(--shadow-elevated), 0 0 0 15px rgba(98, 146, 158, 0.2), 0 0 0 25px rgba(98, 146, 158, 0.1);
+                transform: scale(1.08) rotate(180deg);
+            }
+            75% {
+                box-shadow: var(--shadow-elevated), 0 0 0 8px rgba(98, 146, 158, 0.3);
+                transform: scale(1.05) rotate(270deg);
+            }
+            100% { 
+                box-shadow: var(--shadow-elevated);
+                transform: scale(1) rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0% { 
+                box-shadow: var(--shadow-elevated);
+                transform: scale(1);
+            }
+            25% {
+                box-shadow: var(--shadow-elevated), 0 0 0 10px rgba(231, 76, 60, 0.3);
+            }
+            50% { 
+                box-shadow: var(--shadow-elevated), 0 0 0 20px rgba(231, 76, 60, 0.1), 0 0 0 30px rgba(231, 76, 60, 0.05);
+                transform: scale(1.02);
+            }
+            75% {
+                box-shadow: var(--shadow-elevated), 0 0 0 10px rgba(231, 76, 60, 0.2);
+            }
+            100% { 
+                box-shadow: var(--shadow-elevated);
+                transform: scale(1);
+            }
+        }
+
+        .record-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--blue-munsell);
+            border-radius: 50%;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: relative;
+        }
+
+        .record-button.connecting .record-icon {
+            background: var(--blue-munsell);
+            animation: iconSpin 0.8s infinite linear;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .record-button.connecting .record-icon::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, 
+                transparent 30%, 
+                rgba(255, 255, 255, 0.5) 50%, 
+                transparent 70%);
+            animation: shimmerMove 1.5s infinite;
+        }
+
+        @keyframes shimmerMove {
+            0% { transform: translateX(-100%) translateY(-100%); }
+            100% { transform: translateX(100%) translateY(100%); }
+        }
+
+        @keyframes iconSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .record-button.recording .record-icon {
+            border-radius: 8px;
+            background: #e74c3c;
+        }
+
+        .recording-timer {
+            margin-top: 60px;
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--blue-munsell);
+            font-variant-numeric: tabular-nums;
+            min-height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .recording-timer.active {
+            opacity: 1;
+        }
+
+        .navigation {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            100% {
+                opacity: 0.7;
+                transform: translateY(0);
+            }
+        }
+
+        /* Loading state animation */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .loading {
+            background: linear-gradient(90deg, 
+                var(--background) 25%, 
+                rgba(98, 146, 158, 0.1) 50%, 
+                var(--background) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        /* Success feedback */
+        .success-pulse {
+            animation: successPulse 0.6s ease-out;
+        }
+
+        @keyframes successPulse {
+            0% { 
+                box-shadow: var(--shadow-elevated);
+            }
+            50% { 
+                box-shadow: var(--shadow-elevated), 0 0 0 15px rgba(76, 175, 80, 0.2);
+            }
+            100% { 
+                box-shadow: var(--shadow-elevated);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="dropdown-wrapper">
+                <button class="dropdown-toggle" data-dropdown="lang1">
+                    <span>English</span>
+                    <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+                <div class="dropdown-menu" id="lang1-menu">
+                    <div class="dropdown-item" data-value="Afrikaans">Afrikaans</div>
+                    <div class="dropdown-item" data-value="Arabic">Arabic</div>
+                    <div class="dropdown-item" data-value="Armenian">Armenian</div>
+                    <div class="dropdown-item" data-value="Azerbaijani">Azerbaijani</div>
+                    <div class="dropdown-item" data-value="Belarusian">Belarusian</div>
+                    <div class="dropdown-item" data-value="Bosnian">Bosnian</div>
+                    <div class="dropdown-item" data-value="Bulgarian">Bulgarian</div>
+                    <div class="dropdown-item" data-value="Catalan">Catalan</div>
+                    <div class="dropdown-item" data-value="Chinese">Chinese</div>
+                    <div class="dropdown-item" data-value="Croatian">Croatian</div>
+                    <div class="dropdown-item" data-value="Czech">Czech</div>
+                    <div class="dropdown-item" data-value="Danish">Danish</div>
+                    <div class="dropdown-item" data-value="Dutch">Dutch</div>
+                    <div class="dropdown-item" data-value="English">English</div>
+                    <div class="dropdown-item" data-value="Estonian">Estonian</div>
+                    <div class="dropdown-item" data-value="Finnish">Finnish</div>
+                    <div class="dropdown-item" data-value="French">French</div>
+                    <div class="dropdown-item" data-value="Galician">Galician</div>
+                    <div class="dropdown-item" data-value="German">German</div>
+                    <div class="dropdown-item" data-value="Greek">Greek</div>
+                    <div class="dropdown-item" data-value="Hebrew">Hebrew</div>
+                    <div class="dropdown-item" data-value="Hindi">Hindi</div>
+                    <div class="dropdown-item" data-value="Hungarian">Hungarian</div>
+                    <div class="dropdown-item" data-value="Icelandic">Icelandic</div>
+                    <div class="dropdown-item" data-value="Indonesian">Indonesian</div>
+                    <div class="dropdown-item" data-value="Italian">Italian</div>
+                    <div class="dropdown-item" data-value="Japanese">Japanese</div>
+                    <div class="dropdown-item" data-value="Kannada">Kannada</div>
+                    <div class="dropdown-item" data-value="Kazakh">Kazakh</div>
+                    <div class="dropdown-item" data-value="Korean">Korean</div>
+                    <div class="dropdown-item" data-value="Latvian">Latvian</div>
+                    <div class="dropdown-item" data-value="Lithuanian">Lithuanian</div>
+                    <div class="dropdown-item" data-value="Macedonian">Macedonian</div>
+                    <div class="dropdown-item" data-value="Malay">Malay</div>
+                    <div class="dropdown-item" data-value="Marathi">Marathi</div>
+                    <div class="dropdown-item" data-value="Maori">Maori</div>
+                    <div class="dropdown-item" data-value="Nepali">Nepali</div>
+                    <div class="dropdown-item" data-value="Norwegian">Norwegian</div>
+                    <div class="dropdown-item" data-value="Persian">Persian</div>
+                    <div class="dropdown-item" data-value="Polish">Polish</div>
+                    <div class="dropdown-item" data-value="Portuguese">Portuguese</div>
+                    <div class="dropdown-item" data-value="Romanian">Romanian</div>
+                    <div class="dropdown-item" data-value="Russian">Russian</div>
+                    <div class="dropdown-item" data-value="Serbian">Serbian</div>
+                    <div class="dropdown-item" data-value="Slovak">Slovak</div>
+                    <div class="dropdown-item" data-value="Slovenian">Slovenian</div>
+                    <div class="dropdown-item" data-value="Spanish">Spanish</div>
+                    <div class="dropdown-item" data-value="Swahili">Swahili</div>
+                    <div class="dropdown-item" data-value="Swedish">Swedish</div>
+                    <div class="dropdown-item" data-value="Tagalog">Tagalog</div>
+                    <div class="dropdown-item" data-value="Tamil">Tamil</div>
+                    <div class="dropdown-item" data-value="Thai">Thai</div>
+                    <div class="dropdown-item" data-value="Turkish">Turkish</div>
+                    <div class="dropdown-item" data-value="Ukrainian">Ukrainian</div>
+                    <div class="dropdown-item" data-value="Urdu">Urdu</div>
+                    <div class="dropdown-item" data-value="Vietnamese">Vietnamese</div>
+                    <div class="dropdown-item" data-value="Welsh">Welsh</div>
+                </div>
+            </div>
+            <div class="separator-dot"></div>
+            <div class="dropdown-wrapper">
+                <button class="dropdown-toggle" data-dropdown="lang2">
+                    <span>Español</span>
+                    <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+                <div class="dropdown-menu" id="lang2-menu">
+                    <div class="dropdown-item" data-value="Afrikaans">Afrikaans</div>
+                    <div class="dropdown-item" data-value="Arabic">Arabic</div>
+                    <div class="dropdown-item" data-value="Armenian">Armenian</div>
+                    <div class="dropdown-item" data-value="Azerbaijani">Azerbaijani</div>
+                    <div class="dropdown-item" data-value="Belarusian">Belarusian</div>
+                    <div class="dropdown-item" data-value="Bosnian">Bosnian</div>
+                    <div class="dropdown-item" data-value="Bulgarian">Bulgarian</div>
+                    <div class="dropdown-item" data-value="Catalan">Catalan</div>
+                    <div class="dropdown-item" data-value="Chinese">Chinese</div>
+                    <div class="dropdown-item" data-value="Croatian">Croatian</div>
+                    <div class="dropdown-item" data-value="Czech">Czech</div>
+                    <div class="dropdown-item" data-value="Danish">Danish</div>
+                    <div class="dropdown-item" data-value="Dutch">Dutch</div>
+                    <div class="dropdown-item" data-value="English">English</div>
+                    <div class="dropdown-item" data-value="Estonian">Estonian</div>
+                    <div class="dropdown-item" data-value="Finnish">Finnish</div>
+                    <div class="dropdown-item" data-value="French">French</div>
+                    <div class="dropdown-item" data-value="Galician">Galician</div>
+                    <div class="dropdown-item" data-value="German">German</div>
+                    <div class="dropdown-item" data-value="Greek">Greek</div>
+                    <div class="dropdown-item" data-value="Hebrew">Hebrew</div>
+                    <div class="dropdown-item" data-value="Hindi">Hindi</div>
+                    <div class="dropdown-item" data-value="Hungarian">Hungarian</div>
+                    <div class="dropdown-item" data-value="Icelandic">Icelandic</div>
+                    <div class="dropdown-item" data-value="Indonesian">Indonesian</div>
+                    <div class="dropdown-item" data-value="Italian">Italian</div>
+                    <div class="dropdown-item" data-value="Japanese">Japanese</div>
+                    <div class="dropdown-item" data-value="Kannada">Kannada</div>
+                    <div class="dropdown-item" data-value="Kazakh">Kazakh</div>
+                    <div class="dropdown-item" data-value="Korean">Korean</div>
+                    <div class="dropdown-item" data-value="Latvian">Latvian</div>
+                    <div class="dropdown-item" data-value="Lithuanian">Lithuanian</div>
+                    <div class="dropdown-item" data-value="Macedonian">Macedonian</div>
+                    <div class="dropdown-item" data-value="Malay">Malay</div>
+                    <div class="dropdown-item" data-value="Marathi">Marathi</div>
+                    <div class="dropdown-item" data-value="Maori">Maori</div>
+                    <div class="dropdown-item" data-value="Nepali">Nepali</div>
+                    <div class="dropdown-item" data-value="Norwegian">Norwegian</div>
+                    <div class="dropdown-item" data-value="Persian">Persian</div>
+                    <div class="dropdown-item" data-value="Polish">Polish</div>
+                    <div class="dropdown-item" data-value="Portuguese">Portuguese</div>
+                    <div class="dropdown-item" data-value="Romanian">Romanian</div>
+                    <div class="dropdown-item" data-value="Russian">Russian</div>
+                    <div class="dropdown-item" data-value="Serbian">Serbian</div>
+                    <div class="dropdown-item" data-value="Slovak">Slovak</div>
+                    <div class="dropdown-item" data-value="Slovenian">Slovenian</div>
+                    <div class="dropdown-item" data-value="Spanish">Spanish</div>
+                    <div class="dropdown-item" data-value="Swahili">Swahili</div>
+                    <div class="dropdown-item" data-value="Swedish">Swedish</div>
+                    <div class="dropdown-item" data-value="Tagalog">Tagalog</div>
+                    <div class="dropdown-item" data-value="Tamil">Tamil</div>
+                    <div class="dropdown-item" data-value="Thai">Thai</div>
+                    <div class="dropdown-item" data-value="Turkish">Turkish</div>
+                    <div class="dropdown-item" data-value="Ukrainian">Ukrainian</div>
+                    <div class="dropdown-item" data-value="Urdu">Urdu</div>
+                    <div class="dropdown-item" data-value="Vietnamese">Vietnamese</div>
+                    <div class="dropdown-item" data-value="Welsh">Welsh</div>
+                </div>
+            </div>
+            <div class="settings-btn">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="record-button" id="recordBtn">
+                <div class="record-icon"></div>
+            </div>
+            
+            <div class="recording-timer" id="recordingTimer">00:00</div>
+        </div>
+
+    </div>
+
+    <script>
+        const recordBtn = document.getElementById('recordBtn');
+        const recordingTimer = document.getElementById('recordingTimer');
+        let state = 'off'; // off, connecting, recording
+        let recordingInterval = null;
+        let seconds = 0;
+
+        function updateTimer() {
+            seconds++;
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            recordingTimer.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            seconds = 0;
+            recordingTimer.textContent = '00:00';
+            recordingTimer.classList.add('active');
+            recordingInterval = setInterval(updateTimer, 1000);
+        }
+
+        function stopTimer() {
+            if (recordingInterval) {
+                clearInterval(recordingInterval);
+                recordingInterval = null;
+            }
+            setTimeout(() => {
+                recordingTimer.classList.remove('active');
+                setTimeout(() => {
+                    seconds = 0;
+                    recordingTimer.textContent = '00:00';
+                }, 300);
+            }, 500);
+        }
+
+        recordBtn.addEventListener('click', () => {
+            if (state === 'off') {
+                // Start connecting
+                state = 'connecting';
+                recordBtn.classList.add('connecting');
+                recordBtn.style.transform = 'scale(0.95)';
+                
+                setTimeout(() => {
+                    recordBtn.style.transform = '';
+                }, 200);
+                
+                // Simulate connection time
+                setTimeout(() => {
+                    if (state === 'connecting') {
+                        // Move to recording state
+                        state = 'recording';
+                        recordBtn.classList.remove('connecting');
+                        recordBtn.classList.add('recording');
+                        startTimer();
+                    }
+                }, 3000); // 3 seconds to connect
+                
+            } else if (state === 'recording') {
+                // Stop recording
+                state = 'off';
+                recordBtn.classList.remove('recording');
+                recordBtn.style.transform = 'scale(1.05)';
+                
+                setTimeout(() => {
+                    recordBtn.style.transform = '';
+                    // Success feedback
+                    recordBtn.classList.add('success-pulse');
+                    setTimeout(() => {
+                        recordBtn.classList.remove('success-pulse');
+                    }, 600);
+                }, 200);
+                
+                stopTimer();
+                
+            } else if (state === 'connecting') {
+                // Cancel connection
+                state = 'off';
+                recordBtn.classList.remove('connecting');
+                recordBtn.style.transform = 'scale(1.05)';
+                
+                setTimeout(() => {
+                    recordBtn.style.transform = '';
+                }, 200);
+            }
+        });
+
+        // Dropdown functionality
+        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+        const dropdownMenus = document.querySelectorAll('.dropdown-menu');
+
+        dropdownToggles.forEach(toggle => {
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const dropdown = toggle.dataset.dropdown;
+                const menu = document.getElementById(`${dropdown}-menu`);
+                
+                // Close all other dropdowns
+                dropdownMenus.forEach(m => {
+                    if (m !== menu) {
+                        m.classList.remove('active');
+                    }
+                });
+                dropdownToggles.forEach(t => {
+                    if (t !== toggle) {
+                        t.classList.remove('active');
+                    }
+                });
+                
+                // Toggle current dropdown
+                menu.classList.toggle('active');
+                toggle.classList.toggle('active');
+            });
+        });
+
+        // Select language
+        document.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const value = item.dataset.value;
+                const menu = item.closest('.dropdown-menu');
+                const wrapper = menu.closest('.dropdown-wrapper');
+                const toggle = wrapper.querySelector('.dropdown-toggle');
+                const span = toggle.querySelector('span');
+                
+                // Add loading state
+                toggle.classList.add('loading');
+                
+                // Simulate language change
+                setTimeout(() => {
+                    span.textContent = value;
+                    toggle.classList.remove('loading');
+                    menu.classList.remove('active');
+                    toggle.classList.remove('active');
+                    
+                    // Success feedback
+                    toggle.classList.add('success-pulse');
+                    setTimeout(() => {
+                        toggle.classList.remove('success-pulse');
+                    }, 600);
+                }, 300);
+            });
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', () => {
+            dropdownMenus.forEach(menu => menu.classList.remove('active'));
+            dropdownToggles.forEach(toggle => toggle.classList.remove('active'));
+        });
+
+    </script>
+</body>
+</html>

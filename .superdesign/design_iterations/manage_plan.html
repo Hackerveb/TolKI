@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Voice Translator - Manage Plan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            /* Core Colors */
+            --onyx: #393d3f;
+            --white: #fdfdff;
+            --silver: #c6c5b9;
+            --blue-munsell: #62929e;
+            
+            /* Semantic Colors */
+            --background: var(--white);
+            --foreground: var(--onyx);
+            --primary: var(--blue-munsell);
+            --secondary: var(--silver);
+            
+            /* Typography */
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            
+            /* Neumorphic Shadows */
+            --shadow-elevated: 8px 8px 16px rgba(198, 197, 185, 0.4), 
+                              -8px -8px 16px rgba(255, 255, 255, 0.9);
+            --shadow-pressed: inset 4px 4px 8px rgba(198, 197, 185, 0.4), 
+                             inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+            --shadow-subtle: 4px 4px 8px rgba(198, 197, 185, 0.2), 
+                            -4px -4px 8px rgba(255, 255, 255, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--background);
+            color: var(--foreground);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            max-width: 430px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid rgba(198, 197, 185, 0.2);
+        }
+
+        .back-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--background);
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .back-btn:hover {
+            box-shadow: var(--shadow-elevated);
+            transform: translateX(-2px);
+        }
+
+        .back-btn:active {
+            box-shadow: var(--shadow-pressed);
+        }
+
+        .header-title {
+            flex: 1;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .content::-webkit-scrollbar-thumb {
+            background: var(--silver);
+            border-radius: 2px;
+        }
+
+        /* Current Plan Section */
+        .current-plan {
+            background: var(--background);
+            border-radius: 20px;
+            box-shadow: var(--shadow-subtle);
+            padding: 20px;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .plan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .plan-name {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .plan-badge {
+            padding: 6px 16px;
+            background: var(--primary);
+            color: var(--white);
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .plan-price {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .plan-period {
+            font-size: 14px;
+            color: var(--silver);
+            margin-bottom: 20px;
+        }
+
+        .plan-features {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .plan-feature {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            font-size: 14px;
+            color: var(--foreground);
+        }
+
+        .check-icon {
+            width: 20px;
+            height: 20px;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        /* Available Plans */
+        .plans-section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--foreground);
+            margin-bottom: 15px;
+        }
+
+        .plan-card {
+            background: var(--background);
+            border-radius: 20px;
+            box-shadow: var(--shadow-subtle);
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.5s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .plan-card:nth-child(2) { animation-delay: 0.1s; }
+        .plan-card:nth-child(3) { animation-delay: 0.2s; }
+        .plan-card:nth-child(4) { animation-delay: 0.3s; }
+        .plan-card:nth-child(5) { animation-delay: 0.4s; }
+        .plan-card:nth-child(6) { animation-delay: 0.5s; }
+
+        .plan-card:hover {
+            box-shadow: var(--shadow-elevated);
+            transform: translateY(-2px);
+        }
+
+        .plan-card.selected {
+            box-shadow: var(--shadow-pressed);
+            border: 2px solid var(--primary);
+        }
+
+        .plan-card.recommended::before {
+            content: 'RECOMMENDED';
+            position: absolute;
+            top: 10px;
+            right: -30px;
+            background: var(--primary);
+            color: var(--white);
+            padding: 4px 40px;
+            font-size: 10px;
+            font-weight: 600;
+            transform: rotate(45deg);
+        }
+
+        .plan-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .plan-card-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .plan-card-price {
+            text-align: right;
+        }
+
+        .plan-card-amount {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .plan-card-period {
+            font-size: 12px;
+            color: var(--silver);
+        }
+
+        .plan-card-description {
+            font-size: 13px;
+            color: var(--silver);
+            margin-bottom: 10px;
+        }
+
+        .plan-card-features {
+            font-size: 13px;
+            color: var(--foreground);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            position: sticky;
+            bottom: 0;
+            background: var(--background);
+            padding: 20px;
+            border-top: 1px solid rgba(198, 197, 185, 0.2);
+        }
+
+        .primary-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(98, 146, 158, 0.3);
+        }
+
+        .primary-btn:active {
+            transform: translateY(0);
+        }
+
+        .secondary-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--background);
+            box-shadow: var(--shadow-subtle);
+            color: #e74c3c;
+            border: none;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .secondary-btn:hover {
+            box-shadow: var(--shadow-elevated);
+        }
+
+        .secondary-btn:active {
+            box-shadow: var(--shadow-pressed);
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="back-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </div>
+            <div class="header-title">Manage Plan</div>
+        </div>
+
+        <div class="content">
+            <!-- Current Plan -->
+            <div class="current-plan">
+                <div class="plan-header">
+                    <div class="plan-name">Plus Plan</div>
+                    <div class="plan-badge">Current</div>
+                </div>
+                <div class="plan-price">$14.99</div>
+                <div class="plan-period">per month</div>
+                <ul class="plan-features">
+                    <li class="plan-feature">
+                        <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        45 minutes per month
+                    </li>
+                    <li class="plan-feature">
+                        <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        52 languages supported
+                    </li>
+                    <li class="plan-feature">
+                        <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Real-time translation
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Available Plans -->
+            <div class="plans-section">
+                <div class="section-title">Available Plans</div>
+                
+                <div class="plan-card">
+                    <div class="plan-card-header">
+                        <div class="plan-card-name">Free</div>
+                        <div class="plan-card-price">
+                            <div class="plan-card-amount">$0</div>
+                            <div class="plan-card-period">per month</div>
+                        </div>
+                    </div>
+                    <div class="plan-card-description">Perfect for trying out the service</div>
+                    <div class="plan-card-features">• 5 minutes/month • 52 languages • Real-time translation</div>
+                </div>
+
+                <div class="plan-card selected">
+                    <div class="plan-card-header">
+                        <div class="plan-card-name">Plus</div>
+                        <div class="plan-card-price">
+                            <div class="plan-card-amount">$14.99</div>
+                            <div class="plan-card-period">per month</div>
+                        </div>
+                    </div>
+                    <div class="plan-card-description">Great for regular users</div>
+                    <div class="plan-card-features">• 45 minutes/month • 52 languages • Real-time translation</div>
+                </div>
+
+                <div class="plan-card">
+                    <div class="plan-card-header">
+                        <div class="plan-card-name">Pro</div>
+                        <div class="plan-card-price">
+                            <div class="plan-card-amount">$74.99</div>
+                            <div class="plan-card-period">per month</div>
+                        </div>
+                    </div>
+                    <div class="plan-card-description">For frequent travelers</div>
+                    <div class="plan-card-features">• 5 hours/month • 52 languages • Real-time translation</div>
+                </div>
+
+                <div class="plan-card">
+                    <div class="plan-card-header">
+                        <div class="plan-card-name">Max</div>
+                        <div class="plan-card-price">
+                            <div class="plan-card-amount">$179.99</div>
+                            <div class="plan-card-period">per month</div>
+                        </div>
+                    </div>
+                    <div class="plan-card-description">Professional usage</div>
+                    <div class="plan-card-features">• 15 hours/month • 52 languages • Real-time translation</div>
+                </div>
+
+                <div class="plan-card recommended">
+                    <div class="plan-card-header">
+                        <div class="plan-card-name">Max+</div>
+                        <div class="plan-card-price">
+                            <div class="plan-card-amount">$329.99</div>
+                            <div class="plan-card-period">per month</div>
+                        </div>
+                    </div>
+                    <div class="plan-card-description">For teams and heavy users</div>
+                    <div class="plan-card-features">• 30 hours/month • 52 languages • Priority support</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="primary-btn">Update Plan</button>
+            <button class="secondary-btn">Cancel Subscription</button>
+        </div>
+    </div>
+
+    <script>
+        // Back button
+        const backBtn = document.querySelector('.back-btn');
+        backBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+
+        // Plan selection
+        const planCards = document.querySelectorAll('.plan-card');
+        planCards.forEach(card => {
+            card.addEventListener('click', () => {
+                planCards.forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+            });
+        });
+
+        // Update plan button
+        const updateBtn = document.querySelector('.primary-btn');
+        updateBtn.addEventListener('click', () => {
+            const selectedPlan = document.querySelector('.plan-card.selected .plan-card-name').textContent;
+            if (confirm(`Switch to ${selectedPlan} plan?`)) {
+                alert('Plan updated successfully!');
+            }
+        });
+
+        // Cancel subscription
+        const cancelBtn = document.querySelector('.secondary-btn');
+        cancelBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to cancel your subscription?')) {
+                alert('Subscription cancelled. You will have access until the end of the billing period.');
+            }
+        });
+    </script>
+</body>
+</html>

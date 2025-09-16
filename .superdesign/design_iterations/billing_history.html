@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Voice Translator - Billing History</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            /* Core Colors */
+            --onyx: #393d3f;
+            --white: #fdfdff;
+            --silver: #c6c5b9;
+            --blue-munsell: #62929e;
+            
+            /* Semantic Colors */
+            --background: var(--white);
+            --foreground: var(--onyx);
+            --primary: var(--blue-munsell);
+            --secondary: var(--silver);
+            
+            /* Typography */
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            
+            /* Neumorphic Shadows */
+            --shadow-elevated: 8px 8px 16px rgba(198, 197, 185, 0.4), 
+                              -8px -8px 16px rgba(255, 255, 255, 0.9);
+            --shadow-pressed: inset 4px 4px 8px rgba(198, 197, 185, 0.4), 
+                             inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+            --shadow-subtle: 4px 4px 8px rgba(198, 197, 185, 0.2), 
+                            -4px -4px 8px rgba(255, 255, 255, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--background);
+            color: var(--foreground);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            max-width: 430px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid rgba(198, 197, 185, 0.2);
+        }
+
+        .back-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--background);
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .back-btn:hover {
+            box-shadow: var(--shadow-elevated);
+            transform: translateX(-2px);
+        }
+
+        .back-btn:active {
+            box-shadow: var(--shadow-pressed);
+        }
+
+        .header-title {
+            flex: 1;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .content::-webkit-scrollbar-thumb {
+            background: var(--silver);
+            border-radius: 2px;
+        }
+
+        /* Billing Items */
+        .billing-month {
+            margin-bottom: 25px;
+            animation: fadeInUp 0.5s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .billing-month:nth-child(2) { animation-delay: 0.1s; }
+        .billing-month:nth-child(3) { animation-delay: 0.2s; }
+        .billing-month:nth-child(4) { animation-delay: 0.3s; }
+
+        .month-header {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--silver);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .billing-item {
+            background: var(--background);
+            border-radius: 16px;
+            box-shadow: var(--shadow-subtle);
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .billing-item:hover {
+            box-shadow: var(--shadow-elevated);
+            transform: translateX(2px);
+        }
+
+        .billing-item:active {
+            box-shadow: var(--shadow-pressed);
+        }
+
+        .billing-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .billing-date {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--foreground);
+        }
+
+        .billing-amount {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .billing-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .billing-description {
+            font-size: 13px;
+            color: var(--silver);
+        }
+
+        .billing-status {
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-paid {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
+        }
+
+        .status-pending {
+            background: rgba(255, 152, 0, 0.1);
+            color: #ff9800;
+        }
+
+        .status-failed {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+        }
+
+        /* Download Button */
+        .download-btn {
+            position: absolute;
+            right: 16px;
+            bottom: 16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--background);
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+
+        .billing-item:hover .download-btn {
+            opacity: 1;
+        }
+
+        .download-btn:hover {
+            box-shadow: var(--shadow-elevated);
+            transform: scale(1.1);
+        }
+
+        .download-btn:active {
+            box-shadow: var(--shadow-pressed);
+            transform: scale(0.95);
+        }
+
+        /* Summary Card */
+        .summary-card {
+            background: var(--background);
+            border-radius: 20px;
+            box-shadow: var(--shadow-subtle);
+            padding: 20px;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .summary-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--silver);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+
+        .summary-label {
+            font-size: 14px;
+            color: var(--silver);
+        }
+
+        .summary-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="back-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </div>
+            <div class="header-title">Billing History</div>
+        </div>
+
+        <div class="content">
+            <!-- Summary Card -->
+            <div class="summary-card">
+                <div class="summary-title">Year to Date</div>
+                <div class="summary-row">
+                    <span class="summary-label">Total Paid</span>
+                    <span class="summary-value">$219.89</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Transactions</span>
+                    <span class="summary-value">11</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Current Plan</span>
+                    <span class="summary-value">Pro</span>
+                </div>
+            </div>
+
+            <!-- Billing History -->
+            <div class="billing-month">
+                <div class="month-header">November 2024</div>
+                
+                <div class="billing-item">
+                    <div class="billing-item-header">
+                        <div class="billing-date">Nov 15, 2024</div>
+                        <div class="billing-amount">$19.99</div>
+                    </div>
+                    <div class="billing-details">
+                        <div class="billing-description">Pro Plan - Monthly Subscription</div>
+                        <div class="billing-status status-paid">Paid</div>
+                    </div>
+                    <button class="download-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="billing-month">
+                <div class="month-header">October 2024</div>
+                
+                <div class="billing-item">
+                    <div class="billing-item-header">
+                        <div class="billing-date">Oct 15, 2024</div>
+                        <div class="billing-amount">$19.99</div>
+                    </div>
+                    <div class="billing-details">
+                        <div class="billing-description">Pro Plan - Monthly Subscription</div>
+                        <div class="billing-status status-paid">Paid</div>
+                    </div>
+                    <button class="download-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="billing-month">
+                <div class="month-header">September 2024</div>
+                
+                <div class="billing-item">
+                    <div class="billing-item-header">
+                        <div class="billing-date">Sep 15, 2024</div>
+                        <div class="billing-amount">$19.99</div>
+                    </div>
+                    <div class="billing-details">
+                        <div class="billing-description">Pro Plan - Monthly Subscription</div>
+                        <div class="billing-status status-paid">Paid</div>
+                    </div>
+                    <button class="download-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="billing-item">
+                    <div class="billing-item-header">
+                        <div class="billing-date">Sep 1, 2024</div>
+                        <div class="billing-amount">-$9.99</div>
+                    </div>
+                    <div class="billing-details">
+                        <div class="billing-description">Refund - Plan Downgrade</div>
+                        <div class="billing-status status-paid">Refunded</div>
+                    </div>
+                    <button class="download-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="billing-month">
+                <div class="month-header">August 2024</div>
+                
+                <div class="billing-item">
+                    <div class="billing-item-header">
+                        <div class="billing-date">Aug 15, 2024</div>
+                        <div class="billing-amount">$19.99</div>
+                    </div>
+                    <div class="billing-details">
+                        <div class="billing-description">Pro Plan - Monthly Subscription</div>
+                        <div class="billing-status status-paid">Paid</div>
+                    </div>
+                    <button class="download-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Back button
+        const backBtn = document.querySelector('.back-btn');
+        backBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+
+        // Download invoices
+        const downloadBtns = document.querySelectorAll('.download-btn');
+        downloadBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Animate button
+                btn.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    btn.style.transform = '';
+                    alert('Invoice downloaded');
+                }, 200);
+            });
+        });
+
+        // Billing item click
+        const billingItems = document.querySelectorAll('.billing-item');
+        billingItems.forEach(item => {
+            item.addEventListener('click', () => {
+                // Could open detailed invoice view
+                item.style.animation = 'none';
+                setTimeout(() => {
+                    item.style.animation = 'fadeInUp 0.3s ease-out';
+                }, 10);
+            });
+        });
+    </script>
+</body>
+</html>

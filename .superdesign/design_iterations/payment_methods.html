@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Voice Translator - Payment Methods</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            /* Core Colors */
+            --onyx: #393d3f;
+            --white: #fdfdff;
+            --silver: #c6c5b9;
+            --blue-munsell: #62929e;
+            
+            /* Semantic Colors */
+            --background: var(--white);
+            --foreground: var(--onyx);
+            --primary: var(--blue-munsell);
+            --secondary: var(--silver);
+            
+            /* Typography */
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            
+            /* Neumorphic Shadows */
+            --shadow-elevated: 8px 8px 16px rgba(198, 197, 185, 0.4), 
+                              -8px -8px 16px rgba(255, 255, 255, 0.9);
+            --shadow-pressed: inset 4px 4px 8px rgba(198, 197, 185, 0.4), 
+                             inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+            --shadow-subtle: 4px 4px 8px rgba(198, 197, 185, 0.2), 
+                            -4px -4px 8px rgba(255, 255, 255, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--background);
+            color: var(--foreground);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            max-width: 430px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid rgba(198, 197, 185, 0.2);
+        }
+
+        .back-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--background);
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .back-btn:hover {
+            box-shadow: var(--shadow-elevated);
+            transform: translateX(-2px);
+        }
+
+        .back-btn:active {
+            box-shadow: var(--shadow-pressed);
+        }
+
+        .header-title {
+            flex: 1;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* Payment Card */
+        .payment-card {
+            background: var(--background);
+            border-radius: 20px;
+            box-shadow: var(--shadow-subtle);
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            animation: fadeInUp 0.5s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .payment-card:nth-child(1) { animation-delay: 0s; }
+        .payment-card:nth-child(2) { animation-delay: 0.1s; }
+        .payment-card:nth-child(3) { animation-delay: 0.2s; }
+
+        .payment-card:hover {
+            box-shadow: var(--shadow-elevated);
+            transform: translateX(2px);
+        }
+
+
+        .payment-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .payment-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--background);
+            box-shadow: var(--shadow-pressed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .payment-info {
+            flex: 1;
+            margin-left: 15px;
+        }
+
+        .payment-type {
+            font-size: 14px;
+            color: var(--silver);
+            margin-bottom: 4px;
+        }
+
+        .payment-details {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--foreground);
+        }
+
+
+        .payment-card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .card-action-btn {
+            flex: 1;
+            padding: 8px;
+            background: var(--background);
+            box-shadow: var(--shadow-subtle);
+            border: none;
+            border-radius: 12px;
+            font-size: 13px;
+            color: var(--foreground);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .card-action-btn:hover {
+            box-shadow: var(--shadow-elevated);
+        }
+
+        .card-action-btn:active {
+            box-shadow: var(--shadow-pressed);
+        }
+
+        .card-action-btn.remove {
+            color: #e74c3c;
+        }
+
+        /* Add Payment Method Button */
+        .add-payment-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--background);
+            box-shadow: var(--shadow-subtle);
+            border: 2px dashed var(--silver);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--primary);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.5s ease-out 0.3s;
+            animation-fill-mode: both;
+        }
+
+        .add-payment-btn:hover {
+            box-shadow: var(--shadow-elevated);
+            border-color: var(--primary);
+        }
+
+        .add-payment-btn:active {
+            box-shadow: var(--shadow-pressed);
+        }
+
+        .plus-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 300;
+        }
+
+        /* Info Section */
+        .info-section {
+            background: var(--background);
+            border-radius: 20px;
+            box-shadow: var(--shadow-subtle);
+            padding: 20px;
+            margin-top: 20px;
+            animation: fadeInUp 0.5s ease-out 0.4s;
+            animation-fill-mode: both;
+        }
+
+        .info-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--foreground);
+            margin-bottom: 10px;
+        }
+
+        .info-text {
+            font-size: 13px;
+            color: var(--silver);
+            line-height: 1.6;
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(57, 61, 63, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="back-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </div>
+            <div class="header-title">Payment Methods</div>
+        </div>
+
+        <div class="content">
+            <!-- Payment Cards -->
+            <div class="payment-card">
+                <div class="payment-card-header">
+                    <div style="display: flex; align-items: center;">
+                        <div class="payment-icon">💳</div>
+                        <div class="payment-info">
+                            <div class="payment-type">Visa (Default)</div>
+                            <div class="payment-details">•••• •••• •••• 4242</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="payment-card-actions">
+                    <button class="card-action-btn">Edit</button>
+                    <button class="card-action-btn remove">Remove</button>
+                </div>
+            </div>
+
+            <div class="payment-card">
+                <div class="payment-card-header">
+                    <div style="display: flex; align-items: center;">
+                        <div class="payment-icon">💳</div>
+                        <div class="payment-info">
+                            <div class="payment-type">Mastercard</div>
+                            <div class="payment-details">•••• •••• •••• 8765</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="payment-card-actions">
+                    <button class="card-action-btn">Set as Default</button>
+                    <button class="card-action-btn">Edit</button>
+                    <button class="card-action-btn remove">Remove</button>
+                </div>
+            </div>
+
+            <div class="payment-card">
+                <div class="payment-card-header">
+                    <div style="display: flex; align-items: center;">
+                        <div class="payment-icon">🅿️</div>
+                        <div class="payment-info">
+                            <div class="payment-type">PayPal</div>
+                            <div class="payment-details">john.doe@example.com</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="payment-card-actions">
+                    <button class="card-action-btn">Set as Default</button>
+                    <button class="card-action-btn remove">Remove</button>
+                </div>
+            </div>
+
+            <!-- Add Payment Method -->
+            <button class="add-payment-btn">
+                <div class="plus-icon">+</div>
+                Add Payment Method
+            </button>
+
+            <!-- Info Section -->
+            <div class="info-section">
+                <div class="info-title">Payment Security</div>
+                <div class="info-text">
+                    Your payment information is encrypted and securely stored. We never store your full card details. You can update or remove payment methods at any time.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Back button
+        const backBtn = document.querySelector('.back-btn');
+        backBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+
+        // Set as default
+        const paymentCards = document.querySelectorAll('.payment-card');
+        paymentCards.forEach(card => {
+            const setDefaultBtn = card.querySelector('.card-action-btn');
+            if (setDefaultBtn && setDefaultBtn.textContent === 'Set as Default') {
+                setDefaultBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Update all payment type labels
+                    paymentCards.forEach(c => {
+                        const typeLabel = c.querySelector('.payment-type');
+                        if (typeLabel) {
+                            typeLabel.textContent = typeLabel.textContent.replace(' (Default)', '');
+                        }
+                    });
+                    // Add (Default) to this card
+                    const typeLabel = card.querySelector('.payment-type');
+                    if (typeLabel) {
+                        typeLabel.textContent += ' (Default)';
+                    }
+                    // Update button
+                    setDefaultBtn.remove();
+                });
+            }
+        });
+
+        // Remove payment method
+        const removeButtons = document.querySelectorAll('.card-action-btn.remove');
+        removeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm('Remove this payment method?')) {
+                    const card = btn.closest('.payment-card');
+                    card.style.animation = 'fadeInUp 0.3s ease-out reverse';
+                    setTimeout(() => {
+                        card.remove();
+                    }, 300);
+                }
+            });
+        });
+
+        // Add payment method
+        const addBtn = document.querySelector('.add-payment-btn');
+        addBtn.addEventListener('click', () => {
+            alert('Add payment method modal would open here');
+        });
+
+        // Edit payment method
+        const editButtons = document.querySelectorAll('.card-action-btn:not(.remove)');
+        editButtons.forEach(btn => {
+            if (btn.textContent === 'Edit') {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    alert('Edit payment method modal would open here');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

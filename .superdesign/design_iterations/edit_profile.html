@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Voice Translator - Edit Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            /* Core Colors */
+            --onyx: #393d3f;
+            --white: #fdfdff;
+            --silver: #c6c5b9;
+            --blue-munsell: #62929e;
+            
+            /* Semantic Colors */
+            --background: var(--white);
+            --foreground: var(--onyx);
+            --primary: var(--blue-munsell);
+            --secondary: var(--silver);
+            
+            /* Typography */
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            
+            /* Neumorphic Shadows */
+            --shadow-elevated: 8px 8px 16px rgba(198, 197, 185, 0.4), 
+                              -8px -8px 16px rgba(255, 255, 255, 0.9);
+            --shadow-pressed: inset 4px 4px 8px rgba(198, 197, 185, 0.4), 
+                             inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+            --shadow-subtle: 4px 4px 8px rgba(198, 197, 185, 0.2), 
+                            -4px -4px 8px rgba(255, 255, 255, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--background);
+            color: var(--foreground);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            max-width: 430px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid rgba(198, 197, 185, 0.2);
+        }
+
+        .back-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--background);
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .back-btn:hover {
+            box-shadow: var(--shadow-elevated);
+            transform: translateX(-2px);
+        }
+
+        .back-btn:active {
+            box-shadow: var(--shadow-pressed);
+        }
+
+        .header-title {
+            flex: 1;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .content::-webkit-scrollbar-thumb {
+            background: var(--silver);
+            border-radius: 2px;
+        }
+
+        /* Avatar Section */
+        .avatar-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .avatar-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--background);
+            box-shadow: var(--shadow-elevated);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .avatar:hover {
+            transform: scale(1.05);
+        }
+
+        .avatar-edit {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-subtle);
+            transition: all 0.3s ease;
+        }
+
+        .avatar-edit:hover {
+            transform: scale(1.1);
+        }
+
+        .avatar-text {
+            font-size: 13px;
+            color: var(--silver);
+        }
+
+        /* Form Sections */
+        .form-section {
+            background: var(--background);
+            border-radius: 20px;
+            box-shadow: var(--shadow-subtle);
+            padding: 20px;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.5s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .form-section:nth-child(2) { animation-delay: 0.1s; }
+        .form-section:nth-child(3) { animation-delay: 0.2s; }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--foreground);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            color: var(--silver);
+            margin-bottom: 8px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--background);
+            box-shadow: var(--shadow-pressed);
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            color: var(--foreground);
+            font-family: var(--font-sans);
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            box-shadow: inset 2px 2px 4px rgba(198, 197, 185, 0.3), 
+                        inset -2px -2px 4px rgba(255, 255, 255, 0.8);
+        }
+
+        .form-input:disabled {
+            color: var(--silver);
+            cursor: not-allowed;
+        }
+
+        /* Custom Dropdown Style - Matching Main Page */
+        .dropdown-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .dropdown-toggle {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--background);
+            box-shadow: var(--shadow-pressed);
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            color: var(--foreground);
+            font-family: var(--font-sans);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dropdown-toggle:hover {
+            box-shadow: inset 2px 2px 4px rgba(198, 197, 185, 0.3), 
+                        inset -2px -2px 4px rgba(255, 255, 255, 0.8);
+        }
+
+        .dropdown-toggle.active {
+            box-shadow: inset 4px 4px 8px rgba(198, 197, 185, 0.4), 
+                        inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+        }
+
+        .dropdown-arrow {
+            width: 12px;
+            height: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .dropdown-toggle.active .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            right: 0;
+            background: var(--background);
+            border-radius: 12px;
+            box-shadow: var(--shadow-elevated);
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px) scale(0.95);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 50;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .dropdown-menu.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .dropdown-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            font-size: 14px;
+        }
+
+        .dropdown-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            background: var(--primary);
+            transform: translateX(-3px);
+            transition: transform 0.25s ease;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(98, 146, 158, 0.1);
+            padding-left: 20px;
+        }
+
+        .dropdown-item:hover::before {
+            transform: translateX(0);
+        }
+
+        .dropdown-item:active {
+            background: rgba(98, 146, 158, 0.2);
+        }
+
+        .dropdown-item:not(:last-child) {
+            border-bottom: 1px solid rgba(198, 197, 185, 0.2);
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--background);
+            box-shadow: var(--shadow-pressed);
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            color: var(--foreground);
+            font-family: var(--font-sans);
+            resize: vertical;
+            min-height: 80px;
+            transition: all 0.3s ease;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            box-shadow: inset 2px 2px 4px rgba(198, 197, 185, 0.3), 
+                        inset -2px -2px 4px rgba(255, 255, 255, 0.8);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            position: sticky;
+            bottom: 0;
+            background: var(--background);
+            padding: 20px;
+            border-top: 1px solid rgba(198, 197, 185, 0.2);
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(98, 146, 158, 0.3);
+        }
+
+        .save-btn:active {
+            transform: translateY(0);
+        }
+
+        .save-btn:disabled {
+            background: var(--silver);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Success Animation */
+        .success-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: var(--background);
+            box-shadow: var(--shadow-elevated);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            z-index: 200;
+            animation: successPop 0.5s ease-out forwards;
+        }
+
+        @keyframes successPop {
+            0% { transform: translate(-50%, -50%) scale(0); }
+            80% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="back-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </div>
+            <div class="header-title">Edit Profile</div>
+        </div>
+
+        <div class="content">
+            <!-- Avatar Section -->
+            <div class="avatar-section">
+                <div class="avatar-container">
+                    <div class="avatar">JD</div>
+                    <div class="avatar-edit">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 20h9"></path>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="avatar-text">Tap to change photo</div>
+            </div>
+
+            <!-- Personal Information -->
+            <div class="form-section">
+                <div class="section-title">Personal Information</div>
+                
+                <div class="form-group">
+                    <label class="form-label">First Name</label>
+                    <input type="text" class="form-input" value="John" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" class="form-input" value="Doe" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" value="john.doe@example.com" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="tel" class="form-input" placeholder="+1 (555) 123-4567" />
+                </div>
+            </div>
+
+            <!-- Preferences -->
+            <div class="form-section">
+                <div class="section-title">Preferences</div>
+                
+                <div class="form-group">
+                    <label class="form-label">Default Language</label>
+                    <div class="dropdown-wrapper">
+                        <button class="dropdown-toggle" data-dropdown="default-lang">
+                            <span>English</span>
+                            <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu" id="default-lang-menu">
+                            <div class="dropdown-item" data-value="Afrikaans">Afrikaans</div>
+                            <div class="dropdown-item" data-value="Arabic">Arabic</div>
+                            <div class="dropdown-item" data-value="Armenian">Armenian</div>
+                            <div class="dropdown-item" data-value="Azerbaijani">Azerbaijani</div>
+                            <div class="dropdown-item" data-value="Belarusian">Belarusian</div>
+                            <div class="dropdown-item" data-value="Bosnian">Bosnian</div>
+                            <div class="dropdown-item" data-value="Bulgarian">Bulgarian</div>
+                            <div class="dropdown-item" data-value="Catalan">Catalan</div>
+                            <div class="dropdown-item" data-value="Chinese">Chinese</div>
+                            <div class="dropdown-item" data-value="Croatian">Croatian</div>
+                            <div class="dropdown-item" data-value="Czech">Czech</div>
+                            <div class="dropdown-item" data-value="Danish">Danish</div>
+                            <div class="dropdown-item" data-value="Dutch">Dutch</div>
+                            <div class="dropdown-item" data-value="English">English</div>
+                            <div class="dropdown-item" data-value="Estonian">Estonian</div>
+                            <div class="dropdown-item" data-value="Finnish">Finnish</div>
+                            <div class="dropdown-item" data-value="French">French</div>
+                            <div class="dropdown-item" data-value="Galician">Galician</div>
+                            <div class="dropdown-item" data-value="German">German</div>
+                            <div class="dropdown-item" data-value="Greek">Greek</div>
+                            <div class="dropdown-item" data-value="Hebrew">Hebrew</div>
+                            <div class="dropdown-item" data-value="Hindi">Hindi</div>
+                            <div class="dropdown-item" data-value="Hungarian">Hungarian</div>
+                            <div class="dropdown-item" data-value="Icelandic">Icelandic</div>
+                            <div class="dropdown-item" data-value="Indonesian">Indonesian</div>
+                            <div class="dropdown-item" data-value="Italian">Italian</div>
+                            <div class="dropdown-item" data-value="Japanese">Japanese</div>
+                            <div class="dropdown-item" data-value="Kannada">Kannada</div>
+                            <div class="dropdown-item" data-value="Kazakh">Kazakh</div>
+                            <div class="dropdown-item" data-value="Korean">Korean</div>
+                            <div class="dropdown-item" data-value="Latvian">Latvian</div>
+                            <div class="dropdown-item" data-value="Lithuanian">Lithuanian</div>
+                            <div class="dropdown-item" data-value="Macedonian">Macedonian</div>
+                            <div class="dropdown-item" data-value="Malay">Malay</div>
+                            <div class="dropdown-item" data-value="Marathi">Marathi</div>
+                            <div class="dropdown-item" data-value="Maori">Maori</div>
+                            <div class="dropdown-item" data-value="Nepali">Nepali</div>
+                            <div class="dropdown-item" data-value="Norwegian">Norwegian</div>
+                            <div class="dropdown-item" data-value="Persian">Persian</div>
+                            <div class="dropdown-item" data-value="Polish">Polish</div>
+                            <div class="dropdown-item" data-value="Portuguese">Portuguese</div>
+                            <div class="dropdown-item" data-value="Romanian">Romanian</div>
+                            <div class="dropdown-item" data-value="Russian">Russian</div>
+                            <div class="dropdown-item" data-value="Serbian">Serbian</div>
+                            <div class="dropdown-item" data-value="Slovak">Slovak</div>
+                            <div class="dropdown-item" data-value="Slovenian">Slovenian</div>
+                            <div class="dropdown-item" data-value="Spanish">Spanish</div>
+                            <div class="dropdown-item" data-value="Swahili">Swahili</div>
+                            <div class="dropdown-item" data-value="Swedish">Swedish</div>
+                            <div class="dropdown-item" data-value="Tagalog">Tagalog</div>
+                            <div class="dropdown-item" data-value="Tamil">Tamil</div>
+                            <div class="dropdown-item" data-value="Thai">Thai</div>
+                            <div class="dropdown-item" data-value="Turkish">Turkish</div>
+                            <div class="dropdown-item" data-value="Ukrainian">Ukrainian</div>
+                            <div class="dropdown-item" data-value="Urdu">Urdu</div>
+                            <div class="dropdown-item" data-value="Vietnamese">Vietnamese</div>
+                            <div class="dropdown-item" data-value="Welsh">Welsh</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Account ID</label>
+                    <input type="text" class="form-input" value="USR-2024-789456" disabled />
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="save-btn">Save Changes</button>
+        </div>
+    </div>
+
+    <script>
+        // Back button
+        const backBtn = document.querySelector('.back-btn');
+        backBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+
+        // Avatar edit
+        const avatar = document.querySelector('.avatar');
+        const avatarEdit = document.querySelector('.avatar-edit');
+        
+        [avatar, avatarEdit].forEach(element => {
+            element.addEventListener('click', () => {
+                alert('Photo upload functionality would open here');
+            });
+        });
+
+        // Form inputs animation
+        const inputs = document.querySelectorAll('.form-input, .form-select, .form-textarea');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                const formGroup = input.closest('.form-group');
+                if (formGroup) {
+                    formGroup.style.transform = 'scale(1.02)';
+                }
+            });
+            
+            input.addEventListener('blur', () => {
+                const formGroup = input.closest('.form-group');
+                if (formGroup) {
+                    formGroup.style.transform = '';
+                }
+            });
+        });
+
+        // Save button
+        const saveBtn = document.querySelector('.save-btn');
+        let saving = false;
+        
+        saveBtn.addEventListener('click', () => {
+            if (saving) return;
+            saving = true;
+            
+            // Disable button and show loading
+            saveBtn.textContent = 'Saving...';
+            saveBtn.disabled = true;
+            
+            // Simulate save
+            setTimeout(() => {
+                // Create success message
+                const successMsg = document.createElement('div');
+                successMsg.className = 'success-message';
+                successMsg.innerHTML = `
+                    <div style="font-size: 48px; margin-bottom: 10px;">✓</div>
+                    <div style="font-size: 18px; font-weight: 600; color: var(--foreground);">Profile Updated!</div>
+                `;
+                document.body.appendChild(successMsg);
+                
+                // Reset button
+                saveBtn.textContent = 'Save Changes';
+                saveBtn.disabled = false;
+                saving = false;
+                
+                // Remove success message
+                setTimeout(() => {
+                    successMsg.remove();
+                }, 2000);
+            }, 1500);
+        });
+
+        // Track changes
+        let hasChanges = false;
+        inputs.forEach(input => {
+            if (!input.disabled) {
+                input.addEventListener('input', () => {
+                    hasChanges = true;
+                });
+            }
+        });
+
+        // Custom Dropdown Functionality
+        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+        const dropdownMenus = document.querySelectorAll('.dropdown-menu');
+
+        dropdownToggles.forEach(toggle => {
+            toggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                const dropdownId = toggle.getAttribute('data-dropdown');
+                const menu = document.getElementById(`${dropdownId}-menu`);
+                
+                // Close other dropdowns
+                dropdownMenus.forEach(m => {
+                    if (m !== menu) m.classList.remove('active');
+                });
+                dropdownToggles.forEach(t => {
+                    if (t !== toggle) t.classList.remove('active');
+                });
+                
+                // Toggle current dropdown
+                toggle.classList.toggle('active');
+                menu.classList.toggle('active');
+            });
+        });
+
+        // Handle dropdown item selection
+        document.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const menu = item.closest('.dropdown-menu');
+                const toggle = menu.previousElementSibling;
+                const span = toggle.querySelector('span');
+                
+                span.textContent = item.getAttribute('data-value');
+                menu.classList.remove('active');
+                toggle.classList.remove('active');
+                hasChanges = true;
+            });
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown-wrapper')) {
+                dropdownMenus.forEach(menu => menu.classList.remove('active'));
+                dropdownToggles.forEach(toggle => toggle.classList.remove('active'));
+            }
+        });
+    </script>
+</body>
+</html>
