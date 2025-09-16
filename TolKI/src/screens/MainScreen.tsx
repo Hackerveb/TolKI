@@ -1,0 +1,790 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  SafeAreaView,
+  Animated,
+} from 'react-native';
+import Svg, { Path, Circle } from 'react-native-svg';
+import { Audio } from 'expo-av';
+import { useNavigation } from '@react-navigation/native';
+import { Alert } from 'react-native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { LanguageDropdown } from '../components/LanguageDropdown';
+import { Language, NavigationParamList } from '../types';
+import { defaultSourceLanguage, defaultTargetLanguage } from '../constants/languages';
+import { useCredits } from '../hooks/useCredits';
+import { useTrackUsage } from '../hooks/useTrackUsage';
+import { colors } from '../styles/colors';
+import { typography } from '../styles/typography';
+import { spacing, radius } from '../styles/global';
+import { shadows } from '../styles/shadows';
+
+type MainScreenNavigationProp = StackNavigationProp<NavigationParamList, 'Main'>;
+
+const SettingsIcon = () => (
+  <Svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={colors.foreground} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+    <Circle cx="12" cy="12" r="3" />
+  </Svg>
+);
+
+export const MainScreen: React.FC = () => {
+  const navigation = useNavigation<MainScreenNavigationProp>();
+  const [sourceLanguage, setSourceLanguage] = useState<Language>(defaultSourceLanguage);
+  const [targetLanguage, setTargetLanguage] = useState<Language>(defaultTargetLanguage);
+  const [recordingState, setRecordingState] = useState<'off' | 'connecting' | 'recording'>('off');
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [seconds, setSeconds] = useState(0);
+
+  // Credit system hooks
+  const { balance, hasCredits, isLowOnCredits } = useCredits();
+  const { startTracking, stopTracking, isTracking } = useTrackUsage();
+  
+  // Animation values for record button
+  const buttonRotateAnim = useRef(new Animated.Value(0)).current;
+  const buttonScaleAnim = useRef(new Animated.Value(1)).current;
+  const iconRotateAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim1 = useRef(new Animated.Value(0)).current;
+  const pulseAnim2 = useRef(new Animated.Value(0)).current;
+  const pulseAnim3 = useRef(new Animated.Value(0)).current;
+  const timerOpacity = useRef(new Animated.Value(0)).current;
+  
+  // Animation values for settings button
+  const settingsRotateAnim = useRef(new Animated.Value(0)).current;
+  const settingsScaleAnim = useRef(new Animated.Value(1)).current;
+  
+  const buttonRotateAnimation = useRef<Animated.CompositeAnimation | null>(null);
+  const iconRotateAnimation = useRef<Animated.CompositeAnimation | null>(null);
+  const connectingTimer = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (connectingTimer.current) clearTimeout(connectingTimer.current);
+      if (recording) recording.stopAndUnloadAsync();
+      buttonRotateAnimation.current?.stop();
+      iconRotateAnimation.current?.stop();
+    };
+  }, [recording]);
+
+  // Timer effect - separate from recording state to avoid cleanup issues
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (recordingState === 'recording') {
+      // Reset seconds when starting
+      setSeconds(0);
+      
+      // Show timer
+      Animated.timing(timerOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+      
+      // Start interval after a small delay to ensure state is set
+      interval = setInterval(() => {
+        setSeconds(prevSeconds => prevSeconds + 1);
+      }, 1000);
+      
+    } else if (recordingState === 'off') {
+      // Hide timer after delay
+      const hideTimeout = setTimeout(() => {
+        Animated.timing(timerOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          setSeconds(0);
+        });
+      }, 500);
+      
+      // Cleanup timeout on unmount
+      return () => clearTimeout(hideTimeout);
+    }
+    
+    // Cleanup interval when effect re-runs or unmounts
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [recordingState]);
+
+  const formatTime = (totalSeconds: number) => {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const startConnectingAnimation = () => {
+    // Reset all animations
+    buttonRotateAnim.setValue(0);
+    buttonScaleAnim.setValue(1);
+    iconRotateAnim.setValue(0);
+    pulseAnim1.setValue(0);
+    pulseAnim2.setValue(0);
+    pulseAnim3.setValue(0);
+
+    // Animate the entire button rotation and scale (like in HTML)
+    buttonRotateAnimation.current = Animated.loop(
+      Animated.timing(buttonRotateAnim, {
+        toValue: 1,
+        duration: 1200,
+        useNativeDriver: true,
+      })
+    );
+    buttonRotateAnimation.current.start();
+
+    // Icon also spins separately for shimmer effect
+    iconRotateAnimation.current = Animated.loop(
+      Animated.timing(iconRotateAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      })
+    );
+    iconRotateAnimation.current.start();
+
+    // Scale animation matching HTML keyframes
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(buttonScaleAnim, {
+          toValue: 1.05,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonScaleAnim, {
+          toValue: 1.08,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonScaleAnim, {
+          toValue: 1.05,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonScaleAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Multiple pulse rings
+    Animated.loop(
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(pulseAnim1, {
+            toValue: 1,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim1, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.sequence([
+          Animated.delay(400),
+          Animated.timing(pulseAnim2, {
+            toValue: 1,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim2, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.sequence([
+          Animated.delay(800),
+          Animated.timing(pulseAnim3, {
+            toValue: 1,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim3, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ]),
+      ])
+    ).start();
+  };
+
+  const startRecordingAnimation = () => {
+    buttonRotateAnimation.current?.stop();
+    iconRotateAnimation.current?.stop();
+    
+    buttonRotateAnim.setValue(0);
+    buttonScaleAnim.setValue(1);
+    iconRotateAnim.setValue(0);
+    pulseAnim1.setValue(0);
+    pulseAnim2.setValue(0);
+    pulseAnim3.setValue(0);
+
+    // Gentle pulse for recording (matching HTML)
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(buttonScaleAnim, {
+          toValue: 1.02,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonScaleAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Red pulse rings for recording
+    Animated.loop(
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(pulseAnim1, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim1, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.sequence([
+          Animated.delay(667),
+          Animated.timing(pulseAnim2, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim2, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.sequence([
+          Animated.delay(1333),
+          Animated.timing(pulseAnim3, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim3, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ]),
+      ])
+    ).start();
+  };
+
+  const stopAllAnimations = () => {
+    buttonRotateAnimation.current?.stop();
+    iconRotateAnimation.current?.stop();
+    
+    Animated.parallel([
+      Animated.timing(buttonRotateAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(buttonScaleAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(iconRotateAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(pulseAnim1, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(pulseAnim2, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(pulseAnim3, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const startRecording = async () => {
+    try {
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== 'granted') return;
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      const newRecording = new Audio.Recording();
+      await newRecording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      await newRecording.startAsync();
+      setRecording(newRecording);
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+    }
+  };
+
+  const stopRecording = async () => {
+    if (!recording) return;
+    
+    try {
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
+      setRecording(null);
+      console.log('Recording saved to:', uri);
+    } catch (error) {
+      console.error('Failed to stop recording:', error);
+    }
+  };
+
+  const handleRecordPress = async () => {
+    if (recordingState === 'off') {
+      // Check if user has credits
+      if (!hasCredits()) {
+        Alert.alert(
+          'No Credits Available',
+          'You need credits to use the translation service. Would you like to buy credits?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Buy Credits',
+              onPress: () => navigation.navigate('BuyCredits')
+            },
+          ]
+        );
+        return;
+      }
+
+      // Warning if low on credits
+      if (isLowOnCredits) {
+        Alert.alert(
+          'Low on Credits',
+          `You have ${balance} credits remaining. Consider buying more credits.`,
+          [
+            { text: 'Continue', style: 'default' },
+            {
+              text: 'Buy Credits',
+              onPress: () => navigation.navigate('BuyCredits')
+            },
+          ]
+        );
+      }
+
+      setRecordingState('connecting');
+      startConnectingAnimation();
+      
+      // Initial press animation
+      Animated.timing(buttonScaleAnim, {
+        toValue: 0.95,
+        duration: 200,
+        useNativeDriver: true,
+      }).start(() => {
+        Animated.timing(buttonScaleAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+      });
+      
+      // After 3 seconds, switch to recording
+      connectingTimer.current = setTimeout(async () => {
+        setRecordingState('recording');
+        startRecordingAnimation();
+        await startRecording();
+        // Start tracking usage
+        try {
+          await startTracking(sourceLanguage.code, targetLanguage.code);
+        } catch (error) {
+          console.error('Failed to start tracking:', error);
+        }
+      }, 3000);
+      
+    } else if (recordingState === 'recording') {
+      setRecordingState('off');
+      stopAllAnimations();
+      await stopRecording();
+
+      // Stop tracking usage
+      try {
+        await stopTracking();
+      } catch (error) {
+        console.error('Failed to stop tracking:', error);
+      }
+      
+      // Success pulse animation
+      Animated.sequence([
+        Animated.timing(buttonScaleAnim, {
+          toValue: 1.05,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonScaleAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start();
+      
+    } else if (recordingState === 'connecting') {
+      // Cancel connection
+      if (connectingTimer.current) {
+        clearTimeout(connectingTimer.current);
+      }
+      setRecordingState('off');
+      stopAllAnimations();
+      
+      Animated.sequence([
+        Animated.timing(buttonScaleAnim, {
+          toValue: 1.05,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonScaleAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  };
+
+  const handleSettingsPressIn = () => {
+    Animated.parallel([
+      Animated.timing(settingsRotateAnim, {
+        toValue: 0.25, // 90 degrees
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(settingsScaleAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const handleSettingsPressOut = () => {
+    Animated.parallel([
+      Animated.timing(settingsRotateAnim, {
+        toValue: 0.5, // 180 degrees
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(settingsScaleAnim, {
+        toValue: 0.95,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // Reset after animation
+      setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(settingsRotateAnim, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+          Animated.timing(settingsScaleAnim, {
+            toValue: 1,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }, 100);
+    });
+  };
+
+  const buttonRotation = buttonRotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const iconRotation = iconRotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const settingsRotation = settingsRotateAnim.interpolate({
+    inputRange: [0, 0.25, 0.5, 1],
+    outputRange: ['0deg', '90deg', '180deg', '360deg'],
+  });
+
+  const getIconColor = () => {
+    if (recordingState === 'recording') return '#e74c3c';
+    return colors.blueMunsell;
+  };
+
+  const getIconBorderRadius = () => {
+    return recordingState === 'recording' ? 8 : 20;
+  };
+
+  // Calculate pulse ring styles separately to avoid borderWidth animation
+  const getPulseRingStyle = (pulseAnim: Animated.Value, index: number) => {
+    const scale = pulseAnim.interpolate({
+      inputRange: [0, 0.5, 1],
+      outputRange: index === 0 ? [1, 1.3, 1] : index === 1 ? [1, 1.8, 1] : [1, 2.2, 1],
+    });
+    
+    const opacity = pulseAnim.interpolate({
+      inputRange: [0, 0.5, 1],
+      outputRange: index === 0 ? [0, 0.4, 0] : index === 1 ? [0, 0.2, 0] : [0, 0.1, 0],
+    });
+
+    return {
+      opacity,
+      transform: [{ scale }],
+    };
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <LanguageDropdown
+          selectedLanguage={sourceLanguage}
+          onLanguageSelect={setSourceLanguage}
+        />
+        <View style={styles.separatorDot} />
+        <LanguageDropdown
+          selectedLanguage={targetLanguage}
+          onLanguageSelect={setTargetLanguage}
+        />
+        <Pressable
+          onPress={() => navigation.navigate('Settings')}
+          onPressIn={handleSettingsPressIn}
+          onPressOut={handleSettingsPressOut}
+          style={({ pressed }) => [
+            styles.settingsBtn,
+            pressed && styles.settingsBtnPressed,
+          ]}
+        >
+          <Animated.View
+            style={{
+              transform: [
+                { rotate: settingsRotation },
+                { scale: settingsScaleAnim }
+              ],
+            }}
+          >
+            <SettingsIcon />
+          </Animated.View>
+        </Pressable>
+      </View>
+
+      <View style={styles.mainContent}>
+        {/* Credit Display */}
+        <View style={styles.creditDisplay}>
+          <Text style={styles.creditNumber}>{balance}</Text>
+          <Text style={styles.creditLabel}>credits remaining</Text>
+          {isLowOnCredits && (
+            <Pressable
+              onPress={() => navigation.navigate('BuyCredits')}
+              style={styles.buyCreditsHint}
+            >
+              <Text style={styles.buyCreditsHintText}>Buy more credits →</Text>
+            </Pressable>
+          )}
+        </View>
+
+        <Pressable onPress={handleRecordPress}>
+          <Animated.View
+            style={[
+              styles.recordButton,
+              {
+                transform: [
+                  { scale: buttonScaleAnim },
+                  { rotate: recordingState === 'connecting' ? buttonRotation : '0deg' },
+                ],
+              },
+            ]}
+          >
+            <Animated.View
+              style={[
+                styles.recordIcon,
+                {
+                  backgroundColor: getIconColor(),
+                  borderRadius: getIconBorderRadius(),
+                  transform: [
+                    { rotate: recordingState === 'connecting' ? iconRotation : '0deg' },
+                  ],
+                },
+              ]}
+            />
+            
+            {/* Pulse rings - using separate styles to avoid borderWidth animation */}
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.pulseRing,
+                recordingState === 'connecting' && styles.pulseRingBlue,
+                recordingState === 'recording' && styles.pulseRingRed,
+                getPulseRingStyle(pulseAnim1, 0),
+              ]}
+            />
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.pulseRing,
+                recordingState === 'connecting' && styles.pulseRingBlue,
+                recordingState === 'recording' && styles.pulseRingRed,
+                getPulseRingStyle(pulseAnim2, 1),
+              ]}
+            />
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.pulseRing,
+                recordingState === 'connecting' && styles.pulseRingBlue,
+                recordingState === 'recording' && styles.pulseRingRed,
+                getPulseRingStyle(pulseAnim3, 2),
+              ]}
+            />
+          </Animated.View>
+        </Pressable>
+
+        <Animated.View
+          style={[
+            styles.recordingTimer,
+            {
+              opacity: timerOpacity,
+            },
+          ]}
+        >
+          <Text style={styles.timerText}>{formatTime(seconds)}</Text>
+        </Animated.View>
+      </View>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 15,
+  },
+  separatorDot: {
+    width: 6,
+    height: 6,
+    backgroundColor: colors.silver,
+    borderRadius: 3,
+    flexShrink: 0,
+  },
+  settingsBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    ...shadows.subtle,
+  },
+  settingsBtnPressed: {
+    ...shadows.pressed,
+  },
+  mainContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  recordButton: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    ...shadows.elevated,
+  },
+  recordIcon: {
+    width: 40,
+    height: 40,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  pulseRing: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 8,
+    borderColor: 'transparent',
+  },
+  pulseRingBlue: {
+    borderColor: 'rgba(98, 146, 158, 0.4)',
+  },
+  pulseRingRed: {
+    borderColor: 'rgba(231, 76, 60, 0.3)',
+  },
+  recordingTimer: {
+    marginTop: 60,
+    minHeight: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timerText: {
+    fontSize: 24,
+    fontWeight: '500',
+    color: colors.blueMunsell,
+    fontVariant: ['tabular-nums'],
+  },
+  creditDisplay: {
+    position: 'absolute',
+    top: 20,
+    alignItems: 'center',
+  },
+  creditNumber: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  creditLabel: {
+    fontSize: 12,
+    color: colors.silverAlpha(0.6),
+    marginTop: 4,
+  },
+  buyCreditsHint: {
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: colors.primaryAlpha(0.1),
+    borderRadius: 12,
+  },
+  buyCreditsHintText: {
+    fontSize: 12,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+});
